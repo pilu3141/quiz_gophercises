@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	filename, timelimit, shuffle := getFlagValues()
+	filename, timelimit, shuffle := getPointersOfFlagValues()
 	records := getCsvContent(filename)
 	var correct int64
 	ans := make(chan int)
@@ -24,19 +24,16 @@ func main() {
 	fmt.Println("Score:", <-ans, "/", len(*records))
 }
 
-func getFlagValues() (string, int, bool) {
-	var filename string
-	var timelimit int
-	var shuffle bool
-	flag.StringVar(&filename, "f", "problems.csv", "The filename of the csv with the quiz questions.")
-	flag.IntVar(&timelimit, "t", 30, "The timelimit in seconds.")
-	flag.BoolVar(&shuffle, "s", false, "Shuffle the order in which the questions are asked.")
+func getPointersOfFlagValues() (*string, *int, *bool) {
+	filename := flag.String("f", "problems.csv", "The filename of the csv with the quiz questions.")
+	timelimit := flag.Int("t", 30, "The timelimit in seconds.")
+	shuffle := flag.Bool("s", false, "Shuffle the order in which the questions are asked.")
 	flag.Parse()
 	return filename, timelimit, shuffle
 }
 
-func getCsvContent(filename string) *[][]string {
-	file, err := os.Open(filename)
+func getCsvContent(filename *string) *[][]string {
+	file, err := os.Open(*filename)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,8 +46,8 @@ func getCsvContent(filename string) *[][]string {
 	return &records
 }
 
-func quiz(correct *int64, records *[][]string, shuffle bool, ans chan int) {
-	if shuffle {
+func quiz(correct *int64, records *[][]string, shuffle *bool, ans chan int) {
+	if *shuffle {
 		rand.Seed(time.Now().Unix())
 		for _, i := range rand.Perm(len(*records)) {
 			askQuestion(&(*records)[i], correct)
@@ -73,9 +70,8 @@ func askQuestion(row *[]string, correct *int64) {
 	}
 }
 
-func timer(seconds int, correct *int64, ans chan int) {
-	time.Sleep(time.Duration(seconds) * time.Second)
+func timer(seconds *int, correct *int64, ans chan int) {
+	time.Sleep(time.Duration(*seconds) * time.Second)
 	fmt.Println()
 	ans <- int(atomic.LoadInt64(correct))
 }
-
